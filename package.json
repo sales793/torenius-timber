@@ -1,0 +1,11 @@
+{
+  "name": "torenius-timber-xero",
+  "version": "2.0.0",
+  "description": "Torenius Timber Mill - Direct Xero Integration",
+  "private": true,
+  "dependencies": {
+    "@netlify/blobs": "^6.2.0"
+  },
+  "author": "Torenius Timber",
+  "license": "UNLICENSED"
+}
