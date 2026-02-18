@@ -2,7 +2,6 @@
   publish = "public"
   functions = "netlify/functions"
 
-# Redirects for clean URLs
 [[redirects]]
   from = "/admin"
   to = "/admin.html"
@@ -13,10 +12,6 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Scheduled function for morning summary
-# Runs at 6:30am AEST (20:30 UTC - accounting for AEDT)
-# Note: Scheduled functions require paid plan ($19/month)
-# Alternative: Manually trigger via Netlify UI
 [[functions]]
   schedule = "30 20 * * *"
   name = "morning-summary"
