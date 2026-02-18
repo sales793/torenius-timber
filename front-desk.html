@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Front Desk - Torenius Timber</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a2a4a 0%, #2d4a8a 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-icon { font-size: 28px; }
+        .header-text h1 { font-size: 20px; font-weight: 700; }
+        .header-text p { font-size: 13px; opacity: 0.8; }
+        .header-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+        .refresh-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .refresh-btn:hover { background: rgba(255,255,255,0.3); }
+
+        .stats-bar {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 20px;
+            display: flex;
+            gap: 24px;
+        }
+        .stat { text-align: center; }
+        .stat-num { font-size: 22px; font-weight: 700; color: #2d4a8a; }
+        .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .search-bar-container {
+            background: white;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { outline: none; border-color: #2d4a8a; }
+
+        .orders-container { padding: 16px; max-width: 800px; margin: 0 auto; }
+        .last-updated { font-size: 12px; color: #888; text-align: center; margin-bottom: 12px; }
+
+        .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .filter-btn.active { background: #2d4a8a; border-color: #2d4a8a; color: white; }
+
+        .order-card {
+            background: white;
+            border-radius: 16px;
+            margin-bottom: 14px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            transition: transform 0.2s;
+        }
+        .order-card:hover { transform: translateY(-1px); }
+        .order-card.collected { opacity: 0.55; }
+
+        .order-header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .order-status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #3b82f6;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+        .order-status-dot.collected { background: #22c55e; }
+
+        .order-info { flex: 1; }
+        .order-number { font-size: 13px; color: #888; margin-bottom: 2px; }
+        .order-customer { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+        .order-contact { font-size: 12px; color: #666; margin-top: 3px; }
+
+        .order-badges { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-paid { background: #dcfce7; color: #15803d; }
+        .badge-unpaid { background: #fef3c7; color: #d97706; }
+        .badge-green { background: #dcfce7; color: #15803d; }
+        .badge-dry { background: #fef3c7; color: #92400e; }
+        .badge-mixed { background: #ede9fe; color: #5b21b6; }
+
+        .order-body { padding: 14px 20px; }
+        .order-items-summary { margin-bottom: 10px; }
+        .items-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 6px; }
+        .item-chip {
+            display: inline-block;
+            background: #f5f5f5;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 13px;
+            margin: 3px 4px 3px 0;
+            color: #333;
+        }
+
+        .order-meta-row {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+        }
+        .meta-item span { font-weight: 600; color: #333; }
+
+        .order-footer {
+            padding: 14px 20px;
+            background: #f8f9fb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .order-notes { font-size: 12px; color: #888; font-style: italic; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .collect-btn {
+            padding: 10px 24px;
+            background: #2d4a8a;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .collect-btn:hover { background: #1a2a4a; }
+        .collected-badge { font-size: 13px; color: #22c55e; font-weight: 600; }
+
+        .total-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        .amount-due {
+            font-size: 13px;
+            color: #e53e3e;
+            font-weight: 600;
+        }
+        .amount-paid {
+            font-size: 13px;
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+        .empty-state h3 { font-size: 20px; margin-bottom: 12px; color: #333; }
+        .loading { text-align: center; padding: 40px; color: #666; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-icon">🏠</div>
+    <div class="header-text">
+        <h1>Front Desk</h1>
+        <p>Customer Pickup</p>
+    </div>
+    <div class="header-actions">
+        <button class="refresh-btn" onclick="loadOrders()">⟳ Refresh</button>
+    </div>
+</div>
+
+<div class="stats-bar">
+    <div class="stat">
+        <div class="stat-num" id="statReady">0</div>
+        <div class="stat-label">Awaiting</div>
+    </div>
+    <div class="stat">
+        <div class="stat-num" id="statCollected">0</div>
+        <div class="stat-label">Collected</div>
+    </div>
+    <div class="stat">
+        <div class="stat-num" id="statOwing">$0</div>
+        <div class="stat-label">Owing</div>
+    </div>
+</div>
+
+<div class="search-bar-container">
+    <input type="text" class="search-input" id="searchInput" placeholder="🔍  Search by customer name or invoice number..." oninput="renderOrders()" />
+</div>
+
+<div class="orders-container">
+    <div class="filter-bar">
+        <button class="filter-btn active" id="filterAll" onclick="setFilter('all')">All</button>
+        <button class="filter-btn" id="filterPending" onclick="setFilter('pending')">Awaiting Pickup</button>
+        <button class="filter-btn" id="filterCollected" onclick="setFilter('collected')">Collected</button>
+    </div>
+    <div class="last-updated" id="lastUpdated"></div>
+    <div id="readyOrders"></div>
+</div>
+
+<script>
+    let orders = [];
+    let collectedOrders = {};
+    let currentFilter = 'all';
+
+    function setFilter(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1)).classList.add('active');
+        renderOrders();
+    }
+
+    function saveState() {
+        localStorage.setItem('frontDeskState', JSON.stringify({ collectedOrders }));
+    }
+
+    async function loadOrders() {
+        document.getElementById('readyOrders').innerHTML = '<div class="loading">⏳ Loading orders...</div>';
+
+        try {
+            const response = await fetch('/api/get-invoices');
+            const data = await response.json();
+
+            if (data.error && data.setupUrl) {
+                document.getElementById('readyOrders').innerHTML = `
+                    <div class="empty-state">
+                        <h3>⚠️ Setup Required</h3>
+                        <p><a href="${data.setupUrl}" style="color:#2d4a8a;">Admin Setup →</a></p>
+                    </div>`;
+                return;
+            }
+
+            orders = data;
+
+            orders.forEach(order => {
+                if (collectedOrders[order.id]) {
+                    order.collected = true;
+                    order.collectedAt = collectedOrders[order.id];
+                }
+            });
+
+            document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+            renderOrders();
+
+        } catch(error) {
+            document.getElementById('readyOrders').innerHTML = `
+                <div class="empty-state">
+                    <p>❌ ${error.message}</p>
+                    <button onclick="loadOrders()" style="margin-top:16px;padding:10px 20px;background:#2d4a8a;color:white;border:none;border-radius:8px;cursor:pointer;">Try Again</button>
+                </div>`;
+        }
+    }
+
+    function renderOrders() {
+        const searchTerm = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+
+        let filtered = orders.filter(order => {
+            if (searchTerm) {
+                const matches = (order.customer || '').toLowerCase().includes(searchTerm)
+                    || (order.orderNumber || '').toLowerCase().includes(searchTerm);
+                if (!matches) return false;
+            }
+            if (currentFilter === 'pending') return !order.collected;
+            if (currentFilter === 'collected') return order.collected;
+            return true;
+        });
+
+        // Stats
+        const awaiting = orders.filter(o => !o.collected).length;
+        const collected = orders.filter(o => o.collected).length;
+        const totalOwing = orders.filter(o => !o.collected).reduce((sum, o) => sum + (o.amountDue || 0), 0);
+        document.getElementById('statReady').textContent = awaiting;
+        document.getElementById('statCollected').textContent = collected;
+        document.getElementById('statOwing').textContent = `$${totalOwing.toFixed(0)}`;
+
+        if (filtered.length === 0) {
+            document.getElementById('readyOrders').innerHTML = `
+                <div class="empty-state">
+                    <h3>${searchTerm ? '🔍 No results' : currentFilter === 'collected' ? '📭 Nothing collected yet' : '🎉 All collected!'}</h3>
+                    <p>${searchTerm ? 'Try a different search.' : 'Check back later or refresh.'}</p>
+                </div>`;
+            return;
+        }
+
+        document.getElementById('readyOrders').innerHTML = filtered.map(order => {
+            const hasGreen = order.greenItems && order.greenItems.length > 0;
+            const hasDry = order.dryItems && order.dryItems.length > 0;
+            const allItems = order.allItems || [...(order.greenItems || []), ...(order.dryItems || [])];
+            const stockType = hasGreen && hasDry ? 'mixed' : hasGreen ? 'green' : 'dry';
+
+            const itemChips = allItems.slice(0, 6).map(i =>
+                `<span class="item-chip">${i.spec || 'Item'}</span>`).join('') +
+                (allItems.length > 6 ? `<span class="item-chip">+${allItems.length - 6} more</span>` : '');
+
+            const stockBadge = stockType === 'green'
+                ? '<span class="badge badge-green">🌲 Green</span>'
+                : stockType === 'dry'
+                ? '<span class="badge badge-dry">🪵 Dry</span>'
+                : '<span class="badge badge-mixed">🌲🪵 Mixed</span>';
+
+            return `
+            <div class="order-card ${order.collected ? 'collected' : ''}">
+                <div class="order-header">
+                    <div class="order-status-dot ${order.collected ? 'collected' : ''}"></div>
+                    <div class="order-info">
+                        <div class="order-number">${order.orderNumber || order.id}</div>
+                        <div class="order-customer">${order.customer}</div>
+                        ${order.customerPhone ? `<div class="order-contact">📞 ${order.customerPhone}</div>` : ''}
+                        ${order.customerEmail ? `<div class="order-contact">✉️ ${order.customerEmail}</div>` : ''}
+                    </div>
+                    <div class="order-badges">
+                        <span class="badge ${order.paymentStatus === 'PAID' ? 'badge-paid' : 'badge-unpaid'}">${order.paymentStatus}</span>
+                        ${stockBadge}
+                    </div>
+                </div>
+                <div class="order-body">
+                    <div class="order-items-summary">
+                        <div class="items-label">Items (${allItems.length})</div>
+                        ${itemChips}
+                    </div>
+                    <div class="order-meta-row">
+                        <div class="meta-item">Date: <span>${order.date || '-'}</span></div>
+                        <div class="meta-item">Due: <span>${order.dueDate || '-'}</span></div>
+                        <div class="meta-item">Total: <span>$${(order.totalPrice || 0).toFixed(2)}</span></div>
+                    </div>
+                </div>
+                <div class="order-footer">
+                    <div>
+                        <div class="order-notes">${order.notes || ''}</div>
+                        ${order.amountDue > 0
+                            ? `<div class="amount-due">$${order.amountDue.toFixed(2)} owing</div>`
+                            : `<div class="amount-paid">✓ Paid in full</div>`
+                        }
+                    </div>
+                    ${order.collected
+                        ? `<div class="collected-badge">✅ Collected</div>`
+                        : `<button class="collect-btn" onclick="markCollected('${order.id}')">Mark Collected ✓</button>`
+                    }
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function markCollected(orderId) {
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        if (!confirm(`Mark order ${order.orderNumber} for ${order.customer} as collected?`)) return;
+
+        order.collected = true;
+        order.collectedAt = new Date().toISOString();
+        collectedOrders[orderId] = order.collectedAt;
+        saveState();
+        renderOrders();
+    }
+
+    function init() {
+        const saved = localStorage.getItem('frontDeskState');
+        if (saved) {
+            try {
+                const state = JSON.parse(saved);
+                collectedOrders = state.collectedOrders || {};
+            } catch(e) {}
+        }
+        loadOrders();
+    }
+
+    init();
+</script>
+</body>
+</html>

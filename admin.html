@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Setup - Torenius Timber</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a3a1b 0%, #2c5f2d 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo-icon { font-size: 64px; }
+        .logo-title { font-size: 28px; font-weight: 700; color: #2c5f2d; margin-top: 16px; }
+        .logo-sub { color: #666; font-size: 14px; margin-top: 8px; }
+        
+        .status {
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        .status.pending { background: #fff3cd; color: #856404; }
+        .status.connected { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+        }
+        
+        .info-box h3 { font-size: 16px; margin-bottom: 12px; color: #333; }
+        .info-box ul { margin-left: 20px; }
+        .info-box li { margin-bottom: 8px; color: #666; font-size: 14px; }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: #00B4E1;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover { background: #0096c0; transform: translateY(-2px); }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        
+        .btn-disconnect {
+            background: #dc3545;
+            margin-top: 12px;
+        }
+        
+        .btn-disconnect:hover { background: #c82333; }
+        
+        .connection-info {
+            margin-top: 20px;
+            padding: 16px;
+            background: #e8f5e9;
+            border-radius: 10px;
+        }
+        
+        .connection-info p { margin-bottom: 8px; font-size: 14px; color: #2c5f2d; }
+        .connection-info strong { color: #1a3a1b; }
+        
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .back-link:hover { color: #2c5f2d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <div class="logo-icon">🔧</div>
+            <div class="logo-title">Admin Setup</div>
+            <div class="logo-sub">Torenius Timber Mill System</div>
+        </div>
+        
+        <div id="statusMessage" class="status pending">
+            Checking connection status...
+        </div>
+        
+        <div id="setupContent">
+            <div class="info-box">
+                <h3>📋 One-Time Setup</h3>
+                <ul>
+                    <li>Connect to Xero once</li>
+                    <li>Workers never need to login</li>
+                    <li>Token auto-refreshes</li>
+                    <li>Works for 60 days minimum</li>
+                </ul>
+            </div>
+            
+            <button id="connectBtn" class="btn" onclick="connectXero()">
+                🔗 Connect to Xero
+            </button>
+            
+            <div id="connectionInfo" style="display:none;" class="connection-info">
+                <p><strong>✅ Connected Successfully!</strong></p>
+                <p>Organization: <strong id="orgName">-</strong></p>
+                <p>Connected: <strong id="connectedDate">-</strong></p>
+                <p>Token expires: <strong id="expiryDate">-</strong></p>
+            </div>
+            
+            <button id="disconnectBtn" class="btn btn-disconnect" style="display:none;" onclick="disconnect()">
+                🔓 Disconnect Xero
+            </button>
+            
+            <a href="/" class="back-link">← Back to Apps</a>
+        </div>
+    </div>
+
+    <script>
+        const CLIENT_ID = 'DD25283B5B4C4950A8FC459ABF55E21E';
+        const REDIRECT_URI = window.location.origin + '/admin';
+        const SCOPES = 'openid profile email accounting.transactions.read accounting.contacts.read offline_access';
+        
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/auth-status');
+                const data = await response.json();
+                
+                if (data.connected) {
+                    showConnected(data);
+                } else {
+                    showDisconnected();
+                }
+            } catch (error) {
+                showDisconnected();
+            }
+        }
+        
+        function showConnected(data) {
+            document.getElementById('statusMessage').className = 'status connected';
+            document.getElementById('statusMessage').textContent = '✅ System Connected to Xero';
+            
+            document.getElementById('connectBtn').style.display = 'none';
+            document.getElementById('connectionInfo').style.display = 'block';
+            document.getElementById('disconnectBtn').style.display = 'block';
+            
+            if (data.organization) {
+                document.getElementById('orgName').textContent = data.organization;
+            }
+            if (data.connectedAt) {
+                document.getElementById('connectedDate').textContent = new Date(data.connectedAt).toLocaleString();
+            }
+            if (data.expiresAt) {
+                document.getElementById('expiryDate').textContent = new Date(data.expiresAt).toLocaleString();
+            }
+        }
+        
+        function showDisconnected() {
+            document.getElementById('statusMessage').className = 'status pending';
+            document.getElementById('statusMessage').textContent = '⚠️ Not Connected - Setup Required';
+            
+            document.getElementById('connectBtn').style.display = 'block';
+            document.getElementById('connectionInfo').style.display = 'none';
+            document.getElementById('disconnectBtn').style.display = 'none';
+        }
+        
+        function connectXero() {
+            const authUrl = `https://login.xero.com/identity/connect/authorize?` +
+                `response_type=code&` +
+                `client_id=${CLIENT_ID}&` +
+                `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+                `scope=${encodeURIComponent(SCOPES)}&` +
+                `state=admin-setup`;
+            window.location.href = authUrl;
+        }
+        
+        async function disconnect() {
+            if (!confirm('Disconnect from Xero? Workers will not be able to see orders until you reconnect.')) {
+                return;
+            }
+            
+            try {
+                await fetch('/api/disconnect', { method: 'POST' });
+                showDisconnected();
+            } catch (error) {
+                alert('Error disconnecting: ' + error.message);
+            }
+        }
+        
+        // Handle OAuth callback
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('code')) {
+            document.getElementById('statusMessage').className = 'status pending';
+            document.getElementById('statusMessage').textContent = '⏳ Completing connection...';
+            
+            fetch('/api/admin-callback?' + params.toString())
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        window.history.replaceState({}, '', '/admin');
+                        checkStatus();
+                    } else {
+                        throw new Error(data.error || 'Connection failed');
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('statusMessage').className = 'status error';
+                    document.getElementById('statusMessage').textContent = '❌ Error: ' + error.message;
+                });
+        } else {
+            checkStatus();
+        }
+    </script>
+</body>
+</html>

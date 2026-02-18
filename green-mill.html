@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Mill - Torenius Timber</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f0f4f0;
+            min-height: 100vh;
+        }
+
+        /* Worker Screen */
+        .worker-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a3a1b 0%, #2c5f2d 100%);
+            padding: 20px;
+        }
+        .worker-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .worker-card .icon { font-size: 64px; margin-bottom: 16px; }
+        .worker-card h1 { font-size: 28px; color: #1a3a1b; margin-bottom: 8px; }
+        .worker-card p { color: #666; margin-bottom: 32px; font-size: 16px; }
+        .worker-input {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+        .worker-input:focus { outline: none; border-color: #2c5f2d; }
+        .worker-btn {
+            width: 100%;
+            padding: 16px;
+            background: #2c5f2d;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .worker-btn:hover { background: #1a3a1b; }
+        .worker-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .preset-btn {
+            padding: 10px 18px;
+            background: #f0f4f0;
+            border: 2px solid #d0e0d0;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1a3a1b;
+            transition: all 0.2s;
+        }
+        .preset-btn:hover { background: #2c5f2d; color: white; border-color: #2c5f2d; }
+
+        /* Main App */
+        .main-app { display: none; }
+        .header {
+            background: linear-gradient(135deg, #1a3a1b 0%, #2c5f2d 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-icon { font-size: 28px; }
+        .header-text h1 { font-size: 20px; font-weight: 700; }
+        .header-text p { font-size: 13px; opacity: 0.8; }
+        .header-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+        .refresh-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .refresh-btn:hover { background: rgba(255,255,255,0.3); }
+        .worker-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 20px;
+            display: flex;
+            gap: 24px;
+        }
+        .stat { text-align: center; }
+        .stat-num { font-size: 22px; font-weight: 700; color: #1a3a1b; }
+        .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Orders list */
+        .orders-container { padding: 16px; max-width: 700px; margin: 0 auto; }
+        .last-updated { font-size: 12px; color: #888; text-align: center; margin-bottom: 12px; }
+
+        .order-card {
+            background: white;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        .order-card:hover { transform: translateY(-1px); }
+        .order-card.completed { opacity: 0.6; }
+
+        .order-header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .order-status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #f59e0b;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+        .order-status-dot.completed { background: #22c55e; }
+        .order-info { flex: 1; }
+        .order-number { font-size: 13px; color: #888; margin-bottom: 2px; }
+        .order-customer { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+        .order-meta { font-size: 12px; color: #888; margin-top: 4px; }
+        .order-payment {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .payment-paid { background: #dcfce7; color: #15803d; }
+        .payment-unpaid { background: #fef3c7; color: #d97706; }
+
+        .order-items { padding: 12px 20px; }
+        .item-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .item-row:last-child { border-bottom: none; }
+        .item-checkbox {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 2px solid #d0e0d0;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            background: white;
+        }
+        .item-checkbox.checked {
+            background: #2c5f2d;
+            border-color: #2c5f2d;
+            color: white;
+        }
+        .item-checkbox.checked::after { content: '✓'; font-size: 14px; font-weight: 700; }
+        .item-details { flex: 1; }
+        .item-spec { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+        .item-qty { font-size: 13px; color: #666; }
+        .item-picked { opacity: 0.5; }
+        .item-picked .item-spec { text-decoration: line-through; }
+
+        .order-footer {
+            padding: 14px 20px;
+            background: #f8faf8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .order-notes { font-size: 12px; color: #888; font-style: italic; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .complete-btn {
+            padding: 10px 20px;
+            background: #2c5f2d;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .complete-btn:hover { background: #1a3a1b; }
+        .complete-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .completed-badge {
+            font-size: 13px;
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        /* Empty / loading states */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+        .empty-state h3 { font-size: 20px; margin-bottom: 12px; color: #333; }
+        .loading { text-align: center; padding: 40px; color: #666; font-size: 16px; }
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background: #2c5f2d;
+            border-color: #2c5f2d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Worker Name Screen -->
+<div class="worker-screen" id="workerScreen">
+    <div class="worker-card">
+        <div class="icon">🌲</div>
+        <h1>Green Mill</h1>
+        <p>Who's working today?</p>
+        <div class="worker-presets">
+            <button class="preset-btn" onclick="selectWorker('Matt')">Matt</button>
+            <button class="preset-btn" onclick="selectWorker('Jake')">Jake</button>
+            <button class="preset-btn" onclick="selectWorker('Tom')">Tom</button>
+            <button class="preset-btn" onclick="selectWorker('Sam')">Sam</button>
+        </div>
+        <input type="text" class="worker-input" id="workerInput" placeholder="Or type your name..." maxlength="30" />
+        <button class="worker-btn" onclick="startWorking()">Start Working →</button>
+    </div>
+</div>
+
+<!-- Main App -->
+<div class="main-app" id="mainApp">
+    <div class="header">
+        <div class="header-icon">🌲</div>
+        <div class="header-text">
+            <h1>Green Mill</h1>
+            <p>Torenius Timber</p>
+        </div>
+        <div class="header-actions">
+            <button class="refresh-btn" onclick="loadOrders()">⟳ Refresh</button>
+            <div class="worker-badge" onclick="changeWorker()" title="Change worker">👷 <span id="workerName"></span></div>
+        </div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-num" id="statPending">0</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" id="statCompleted">0</div>
+            <div class="stat-label">Done Today</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" id="statTotal">0</div>
+            <div class="stat-label">Total</div>
+        </div>
+    </div>
+
+    <div class="orders-container">
+        <div class="filter-bar">
+            <button class="filter-btn active" id="filterAll" onclick="setFilter('all')">All</button>
+            <button class="filter-btn" id="filterPending" onclick="setFilter('pending')">Pending</button>
+            <button class="filter-btn" id="filterDone" onclick="setFilter('done')">Completed</button>
+        </div>
+        <div class="last-updated" id="lastUpdated"></div>
+        <div id="ordersList"></div>
+    </div>
+</div>
+
+<script>
+    let orders = [];
+    let currentWorker = '';
+    let completedOrders = {};
+    let pickedItems = {};
+    let currentFilter = 'all';
+
+    function selectWorker(name) {
+        document.getElementById('workerInput').value = name;
+        startWorking();
+    }
+
+    function startWorking() {
+        const name = document.getElementById('workerInput').value.trim();
+        if (!name) {
+            document.getElementById('workerInput').focus();
+            return;
+        }
+        currentWorker = name;
+        localStorage.setItem('greenMillWorker', name);
+        showMainApp();
+    }
+
+    function changeWorker() {
+        if (confirm('Switch worker?')) {
+            localStorage.removeItem('greenMillWorker');
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('workerScreen').style.display = 'flex';
+            document.getElementById('workerInput').value = '';
+        }
+    }
+
+    function showWorkerScreen() {
+        document.getElementById('workerScreen').style.display = 'flex';
+        document.getElementById('mainApp').style.display = 'none';
+    }
+
+    function showMainApp() {
+        document.getElementById('workerScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        document.getElementById('workerName').textContent = currentWorker;
+        loadOrders();
+    }
+
+    function savePickState() {
+        localStorage.setItem('greenMillPickState', JSON.stringify({ completedOrders, pickedItems }));
+    }
+
+    function setFilter(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1)).classList.add('active');
+        renderOrders();
+    }
+
+    async function loadOrders() {
+        document.getElementById('ordersList').innerHTML = '<div class="loading">⏳ Loading orders...</div>';
+
+        try {
+            const response = await fetch('/api/get-invoices');
+            const data = await response.json();
+
+            if (data.error && data.setupUrl) {
+                document.getElementById('ordersList').innerHTML = `
+                    <div class="empty-state">
+                        <h3>⚠️ Setup Required</h3>
+                        <p>Admin needs to connect to Xero first.</p>
+                        <a href="${data.setupUrl}" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#2c5f2d;color:white;text-decoration:none;border-radius:8px;">Go to Admin Setup</a>
+                    </div>`;
+                return;
+            }
+
+            orders = data.filter(order => order.greenItems && order.greenItems.length > 0)
+                .map(order => ({ ...order, items: order.greenItems }));
+
+            orders.forEach(order => {
+                if (completedOrders[order.id]) {
+                    order.status = 'completed';
+                    order.completedAt = completedOrders[order.id];
+                }
+                order.items.forEach((item, idx) => {
+                    item.picked = pickedItems[`${order.id}-${idx}`] || false;
+                    item.id = idx;
+                });
+            });
+
+            document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+            renderOrders();
+
+        } catch (error) {
+            document.getElementById('ordersList').innerHTML = `
+                <div class="empty-state">
+                    <p>❌ Error: ${error.message}</p>
+                    <button onclick="loadOrders()" style="margin-top:16px;padding:10px 20px;background:#2c5f2d;color:white;border:none;border-radius:8px;cursor:pointer;">Try Again</button>
+                </div>`;
+        }
+    }
+
+    function renderOrders() {
+        let filtered = orders;
+        if (currentFilter === 'pending') filtered = orders.filter(o => o.status !== 'completed');
+        if (currentFilter === 'done') filtered = orders.filter(o => o.status === 'completed');
+
+        const pending = orders.filter(o => o.status !== 'completed').length;
+        const done = orders.filter(o => o.status === 'completed').length;
+        document.getElementById('statPending').textContent = pending;
+        document.getElementById('statCompleted').textContent = done;
+        document.getElementById('statTotal').textContent = orders.length;
+
+        if (filtered.length === 0) {
+            document.getElementById('ordersList').innerHTML = `
+                <div class="empty-state">
+                    <h3>${currentFilter === 'done' ? '📭 No completed orders yet' : '🎉 All done!'}</h3>
+                    <p>${currentFilter === 'pending' ? 'No pending orders.' : 'Check back later or refresh.'}</p>
+                </div>`;
+            return;
+        }
+
+        document.getElementById('ordersList').innerHTML = filtered.map(order => {
+            const isComplete = order.status === 'completed';
+            const allPicked = order.items.every(i => i.picked);
+            const pickedCount = order.items.filter(i => i.picked).length;
+
+            const itemsHtml = order.items.map((item, idx) => `
+                <div class="item-row ${item.picked ? 'item-picked' : ''}">
+                    <div class="item-checkbox ${item.picked ? 'checked' : ''}"
+                         onclick="${isComplete ? '' : `toggleItem('${order.id}', ${item.id})`}"
+                         style="${isComplete ? 'cursor:default;' : ''}"></div>
+                    <div class="item-details">
+                        <div class="item-spec">${item.spec || 'Item'}</div>
+                        <div class="item-qty">${item.quantity || ''}</div>
+                    </div>
+                </div>`).join('');
+
+            return `
+            <div class="order-card ${isComplete ? 'completed' : ''}">
+                <div class="order-header">
+                    <div class="order-status-dot ${isComplete ? 'completed' : ''}"></div>
+                    <div class="order-info">
+                        <div class="order-number">${order.orderNumber || order.id}</div>
+                        <div class="order-customer">${order.customer}</div>
+                        <div class="order-meta">${order.date} · ${order.items.length} item${order.items.length !== 1 ? 's' : ''} · ${pickedCount}/${order.items.length} picked</div>
+                    </div>
+                    <div class="order-payment ${order.paymentStatus === 'PAID' ? 'payment-paid' : 'payment-unpaid'}">${order.paymentStatus}</div>
+                </div>
+                <div class="order-items">${itemsHtml}</div>
+                <div class="order-footer">
+                    <div class="order-notes">${order.notes || ''}</div>
+                    ${isComplete
+                        ? `<div class="completed-badge">✅ Done by ${currentWorker}</div>`
+                        : `<button class="complete-btn" onclick="completeOrder('${order.id}')" ${!allPicked ? 'disabled title="Pick all items first"' : ''}>
+                            Mark Complete
+                           </button>`
+                    }
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function toggleItem(orderId, itemId) {
+        const order = orders.find(o => o.id === orderId);
+        if (!order || order.status === 'completed') return;
+        const item = order.items.find(i => i.id === itemId);
+        if (!item) return;
+        item.picked = !item.picked;
+        pickedItems[`${orderId}-${itemId}`] = item.picked;
+        savePickState();
+        renderOrders();
+    }
+
+    async function completeOrder(orderId) {
+        const order = orders.find(o => o.id === orderId);
+        const allPicked = order.items.every(item => item.picked);
+
+        if (!allPicked) {
+            alert('Please pick all items first!');
+            return;
+        }
+
+        const now = new Date().toISOString();
+        order.status = 'completed';
+        order.completedAt = now;
+        completedOrders[orderId] = now;
+        savePickState();
+
+        try {
+            await fetch('/api/order-complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    orderNumber: order.orderNumber,
+                    customer: order.customer,
+                    worker: currentWorker,
+                    items: order.items.map(i => ({ spec: i.spec, quantity: i.quantity })),
+                    mill: 'Green Mill'
+                })
+            });
+        } catch (error) {
+            console.error('Failed to send completion notification:', error);
+        }
+
+        renderOrders();
+        alert(`✅ Order ${order.orderNumber} for ${order.customer} marked complete!`);
+    }
+
+    function init() {
+        const savedWorker = localStorage.getItem('greenMillWorker');
+        if (savedWorker) {
+            currentWorker = savedWorker;
+            showMainApp();
+        } else {
+            showWorkerScreen();
+        }
+
+        const saved = localStorage.getItem('greenMillPickState');
+        if (saved) {
+            try {
+                const state = JSON.parse(saved);
+                completedOrders = state.completedOrders || {};
+                pickedItems = state.pickedItems || {};
+            } catch(e) {}
+        }
+    }
+
+    document.getElementById('workerInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') startWorking();
+    });
+
+    init();
+</script>
+</body>
+</html>

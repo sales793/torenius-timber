@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Pricing Calculator - Forcett Mill</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .calculator-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .calculator-body {
+            padding: 30px;
+        }
+        
+        .search-section {
+            margin-bottom: 30px;
+        }
+        
+        .search-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .result-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 30px;
+            display: none;
+        }
+        
+        .result-card.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-town {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .result-price {
+            font-size: 48px;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+        
+        .result-zone {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .result-distance {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .suggestions {
+            margin-top: 20px;
+        }
+        
+        .suggestion-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        
+        .suggestion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        
+        .suggestion-btn {
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .suggestion-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .zones-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .zones-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .zone-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .zone-item:last-child {
+            border-bottom: none;
+        }
+        
+        .zone-name {
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .zone-price {
+            font-weight: 700;
+            font-size: 18px;
+            color: #333;
+        }
+        
+        .free-delivery-note {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .not-found {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            display: none;
+        }
+        
+        .not-found.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <div class="header">
+            <h1>🚛 Delivery Pricing</h1>
+            <p>Forcett Mill - Southern Tasmania</p>
+        </div>
+        
+        <div class="calculator-body">
+            <div class="search-section">
+                <label class="search-label">Where are we delivering to?</label>
+                <input type="text" 
+                       class="search-input" 
+                       id="townSearch" 
+                       placeholder="Type town or suburb name..."
+                       autocomplete="off">
+            </div>
+            
+            <div class="result-card" id="resultCard">
+                <div class="result-town" id="resultTown"></div>
+                <div class="result-price" id="resultPrice"></div>
+                <div class="result-zone" id="resultZone"></div>
+                <div class="result-distance" id="resultDistance"></div>
+            </div>
+            
+            <div class="not-found" id="notFound">
+                <p>Town not found. Try a nearby location or call for a quote.</p>
+            </div>
+            
+            <div class="suggestions">
+                <div class="suggestion-title">Popular Destinations:</div>
+                <div class="suggestion-grid" id="suggestions"></div>
+            </div>
+            
+            <div class="free-delivery-note">
+                ✨ FREE DELIVERY on orders over $2,000 (Zones 1-3 only)
+            </div>
+            
+            <div class="zones-info">
+                <div class="zones-title">📍 Delivery Zones</div>
+                <div class="zone-item">
+                    <span class="zone-name">Zone 1 - Local (0-15km)</span>
+                    <span class="zone-price">$40</span>
+                </div>
+                <div class="zone-item">
+                    <span class="zone-name">Zone 2 - Nearby (15-30km)</span>
+                    <span class="zone-price">$60</span>
+                </div>
+                <div class="zone-item">
+                    <span class="zone-name">Zone 3 - Hobart Metro (30-45km)</span>
+                    <span class="zone-price">$80</span>
+                </div>
+                <div class="zone-item">
+                    <span class="zone-name">Zone 4 - Southern Suburbs (45-60km)</span>
+                    <span class="zone-price">$100</span>
+                </div>
+                <div class="zone-item">
+                    <span class="zone-name">Zone 5 - Extended (60-80km)</span>
+                    <span class="zone-price">$130</span>
+                </div>
+                <div class="zone-item">
+                    <span class="zone-name">Zone 6 - Far South (80km+)</span>
+                    <span class="zone-price">$160</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const deliveryPricing = {
+            // Zone 1 - Local (0-15km) - $40
+            'forcett': { zone: 'Zone 1 - Local', price: 0, distance: '0km', note: 'PICKUP' },
+            'lewisham': { zone: 'Zone 1 - Local', price: 40, distance: '~8km' },
+            'dulcot': { zone: 'Zone 1 - Local', price: 40, distance: '~12km' },
+            'penna': { zone: 'Zone 1 - Local', price: 40, distance: '~10km' },
+            
+            // Zone 2 - Nearby (15-30km) - $60
+            'richmond': { zone: 'Zone 2 - Nearby', price: 60, distance: '~18km' },
+            'cambridge': { zone: 'Zone 2 - Nearby', price: 60, distance: '~25km' },
+            'lauderdale': { zone: 'Zone 2 - Nearby', price: 60, distance: '~25km' },
+            'dodges ferry': { zone: 'Zone 2 - Nearby', price: 60, distance: '~28km' },
+            'carlton': { zone: 'Zone 2 - Nearby', price: 60, distance: '~20km' },
+            'sorell': { zone: 'Zone 2 - Nearby', price: 60, distance: '~20km' },
+            'midway point': { zone: 'Zone 2 - Nearby', price: 60, distance: '~22km' },
+            
+            // Zone 3 - Hobart Metro (30-45km) - $80
+            'hobart': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~35km' },
+            'hobart cbd': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~35km' },
+            'sandy bay': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~38km' },
+            'battery point': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~36km' },
+            'south hobart': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~37km' },
+            'west hobart': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~36km' },
+            'north hobart': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~35km' },
+            'new town': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~38km' },
+            'glenorchy': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~40km' },
+            'moonah': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~39km' },
+            'bellerive': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~32km' },
+            'rosny': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~30km' },
+            'howrah': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~31km' },
+            'lindisfarne': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~33km' },
+            'rokeby': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~28km' },
+            'clarendon vale': { zone: 'Zone 3 - Hobart Metro', price: 80, distance: '~27km' },
+            
+            // Zone 4 - Southern Suburbs (45-60km) - $100
+            'kingston': { zone: 'Zone 4 - Southern Suburbs', price: 100, distance: '~45km' },
+            'blackmans bay': { zone: 'Zone 4 - Southern Suburbs', price: 100, distance: '~50km' },
+            'taroona': { zone: 'Zone 4 - Southern Suburbs', price: 100, distance: '~42km' },
+            'mount nelson': { zone: 'Zone 4 - Southern Suburbs', price: 100, distance: '~40km' },
+            'fern tree': { zone: 'Zone 4 - Southern Suburbs', price: 100, distance: '~45km' },
+            'huonville': { zone: 'Zone 4 - Southern Suburbs', price: 100, distance: '~55km' },
+            
+            // Zone 5 - Extended (60-80km) - $130
+            'margate': { zone: 'Zone 5 - Extended', price: 130, distance: '~60km' },
+            'snug': { zone: 'Zone 5 - Extended', price: 130, distance: '~65km' },
+            'kettering': { zone: 'Zone 5 - Extended', price: 130, distance: '~68km' },
+            'woodbridge': { zone: 'Zone 5 - Extended', price: 130, distance: '~62km' },
+            'cygnet': { zone: 'Zone 5 - Extended', price: 130, distance: '~70km' },
+            
+            // Zone 6 - Far South (80km+) - $160
+            'geeveston': { zone: 'Zone 6 - Far South', price: 160, distance: '~85km' },
+            'dover': { zone: 'Zone 6 - Far South', price: 160, distance: '~95km' },
+            'southport': { zone: 'Zone 6 - Far South', price: 160, distance: '~110km' },
+            
+            // Zone 7 - North/East - $120
+            'orford': { zone: 'Zone 7 - North/East', price: 120, distance: '~50km' },
+            'triabunna': { zone: 'Zone 7 - North/East', price: 120, distance: '~60km' },
+            'buckland': { zone: 'Zone 7 - North/East', price: 120, distance: '~30km' },
+        };
+        
+        const popularTowns = [
+            'Richmond', 'Sorell', 'Hobart', 'Cambridge', 
+            'Bellerive', 'Kingston', 'Lauderdale', 'Glenorchy'
+        ];
+        
+        function showResult(town, data) {
+            document.getElementById('resultTown').textContent = town.charAt(0).toUpperCase() + town.slice(1);
+            
+            if (data.price === 0) {
+                document.getElementById('resultPrice').textContent = 'FREE';
+                document.getElementById('resultZone').textContent = 'Pickup at mill';
+            } else {
+                document.getElementById('resultPrice').textContent = '$' + data.price;
+                document.getElementById('resultZone').textContent = data.zone;
+            }
+            
+            document.getElementById('resultDistance').textContent = data.distance + ' from Forcett';
+            document.getElementById('resultCard').classList.add('show');
+            document.getElementById('notFound').classList.remove('show');
+        }
+        
+        function hideResult() {
+            document.getElementById('resultCard').classList.remove('show');
+        }
+        
+        function showNotFound() {
+            document.getElementById('notFound').classList.add('show');
+            hideResult();
+        }
+        
+        function searchTown(query) {
+            if (!query) {
+                hideResult();
+                document.getElementById('notFound').classList.remove('show');
+                return;
+            }
+            
+            const searchTerm = query.toLowerCase().trim();
+            
+            // Direct match
+            if (deliveryPricing[searchTerm]) {
+                showResult(searchTerm, deliveryPricing[searchTerm]);
+                return;
+            }
+            
+            // Partial match
+            const partialMatch = Object.keys(deliveryPricing).find(town => 
+                town.includes(searchTerm) || searchTerm.includes(town)
+            );
+            
+            if (partialMatch) {
+                showResult(partialMatch, deliveryPricing[partialMatch]);
+                return;
+            }
+            
+            showNotFound();
+        }
+        
+        // Event listeners
+        document.getElementById('townSearch').addEventListener('input', function(e) {
+            searchTown(e.target.value);
+        });
+        
+        // Render suggestions
+        const suggestionsContainer = document.getElementById('suggestions');
+        popularTowns.forEach(town => {
+            const btn = document.createElement('button');
+            btn.className = 'suggestion-btn';
+            btn.textContent = town;
+            btn.onclick = function() {
+                document.getElementById('townSearch').value = town;
+                searchTown(town);
+            };
+            suggestionsContainer.appendChild(btn);
+        });
+    </script>
+</body>
+</html>
